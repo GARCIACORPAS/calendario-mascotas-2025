@@ -1,0 +1,474 @@
+
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calendario Anual de Mascotas</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f2f5; /* Light grey background */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .calendar-container {
+            background-color: #ffffff;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            width: 100%;
+            max-width: 900px;
+            display: flex;
+            flex-direction: column;
+            min-height: 700px; /* Ensure sufficient height */
+            position: relative; /* For loading spinner positioning */
+        }
+        .cover-page, .month-page {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 40px;
+            box-sizing: border-box;
+            text-align: center;
+            transition: opacity 0.5s ease-in-out;
+        }
+        .hidden {
+            display: none;
+        }
+        .cover-image {
+            max-width: 80%;
+            height: auto;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+        }
+        .month-image {
+            max-width: 90%;
+            max-height: 250px;
+            object-fit: cover;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            margin-bottom: 25px;
+        }
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 8px;
+            width: 100%;
+            max-width: 700px; /* Limit calendar grid width */
+            margin-top: 20px;
+        }
+        .day-header, .day-cell {
+            padding: 12px 0;
+            border-radius: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+        .day-header {
+            background-color: #e0f2f7; /* Light blue */
+            color: #2c5282; /* Darker blue */
+            font-weight: 600;
+        }
+        .day-cell {
+            background-color: #f7fafc; /* Very light grey */
+            color: #4a5568; /* Medium grey */
+        }
+        .day-cell.empty {
+            background-color: transparent;
+            color: #cbd5e0; /* Lighter grey for empty cells */
+        }
+        .day-cell.holiday {
+            background-color: #ffeded; /* Light red for holidays */
+            color: #c53030; /* Dark red for holidays */
+            font-weight: 700;
+            border: 1px solid #c53030;
+        }
+        .day-cell.current-day {
+            background-color: #4299e1; /* Blue for current day */
+            color: #ffffff;
+            font-weight: 700;
+            box-shadow: 0 2px 5px rgba(66, 153, 225, 0.4);
+        }
+        .day-cell:not(.empty):hover {
+            background-color: #ebf8ff; /* Lighter blue on hover */
+            cursor: pointer;
+        }
+        .navigation-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 30px;
+            padding-bottom: 20px;
+            width: 100%;
+        }
+        .nav-button {
+            background-color: #63b3ed; /* Light blue */
+            color: white;
+            padding: 12px 25px;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .nav-button:hover {
+            background-color: #4299e1; /* Darker blue on hover */
+            transform: translateY(-2px);
+        }
+        .nav-button:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Loading Spinner Styles */
+        .loading-spinner {
+            border: 8px solid #f3f3f3; /* Light grey */
+            border-top: 8px solid #4299e1; /* Blue */
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            animation: spin 1s linear infinite;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1000;
+        }
+
+        @keyframes spin {
+            0% { transform: translate(-50%, -50%) rotate(0deg); }
+            100% { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .calendar-container {
+                min-height: 600px;
+                padding: 15px;
+            }
+            .cover-page, .month-page {
+                padding: 20px;
+            }
+            .cover-image {
+                margin-bottom: 20px;
+            }
+            .month-image {
+                max-height: 200px;
+                margin-bottom: 20px;
+            }
+            .calendar-grid {
+                gap: 5px;
+                margin-top: 15px;
+            }
+            .day-header, .day-cell {
+                padding: 8px 0;
+                font-size: 0.8rem;
+            }
+            .navigation-buttons {
+                flex-direction: column;
+                gap: 10px;
+                margin-top: 20px;
+            }
+            .nav-button {
+                width: 80%;
+                margin: 0 auto;
+                padding: 10px 20px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .calendar-container {
+                min-height: 550px;
+            }
+            h1 {
+                font-size: 1.8rem;
+            }
+            h2 {
+                font-size: 1.5rem;
+            }
+            .day-header, .day-cell {
+                font-size: 0.75rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="calendarApp" class="calendar-container">
+        <!-- Loading Spinner -->
+        <div id="loadingSpinner" class="loading-spinner hidden"></div>
+
+        <!-- Cover Page -->
+        <div id="coverPage" class="cover-page">
+            <h1 class="text-5xl font-bold text-gray-800 mb-6">Calendario Anual de Mascotas 2025</h1>
+            <img id="coverImage" src="https://placehold.co/600x400/a3d9e0/000000?text=Cargando+Imagen..." alt="Portada con perro y gato realistas" class="cover-image">
+            <p class="text-xl text-gray-600 mb-8">¡Un año lleno de adorables compañeros!</p>
+            <button id="startButton" class="nav-button">Ver Calendario</button>
+        </div>
+
+        <!-- Month Pages (will be dynamically generated and shown one by one) -->
+        <div id="monthPagesContainer" class="hidden flex-grow w-full">
+            <!-- Content will be injected here by JavaScript -->
+        </div>
+
+        <!-- Navigation Buttons for Months -->
+        <div id="monthNavigation" class="navigation-buttons hidden">
+            <button id="prevMonth" class="nav-button">Anterior</button>
+            <button id="nextMonth" class="nav-button">Siguiente</button>
+            <button id="backToCover" class="nav-button">Portada</button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const calendarApp = document.getElementById('calendarApp');
+            const coverPage = document.getElementById('coverPage');
+            const monthPagesContainer = document.getElementById('monthPagesContainer');
+            const monthNavigation = document.getElementById('monthNavigation');
+            const startButton = document.getElementById('startButton');
+            const prevMonthButton = document.getElementById('prevMonth');
+            const nextMonthButton = document.getElementById('nextMonth');
+            const backToCoverButton = document.getElementById('backToCover');
+            const coverImageElement = document.getElementById('coverImage');
+            const loadingSpinner = document.getElementById('loadingSpinner');
+
+            let currentMonthIndex = 0;
+            const currentYear = 2025; // Calendar year
+
+            // Common Spanish national holidays for 2025 (some regional may vary)
+            // Format: { month (0-11), day, name }
+            const holidays = [
+                { month: 0, day: 1, name: "Año Nuevo" }, // Enero 1
+                { month: 0, day: 6, name: "Día de Reyes" }, // Enero 6
+                { month: 3, day: 17, name: "Jueves Santo" }, // April 17 (2025 - changes yearly)
+                { month: 3, day: 18, name: "Viernes Santo" }, // April 18 (2025 - changes yearly)
+                { month: 4, day: 1, name: "Día del Trabajo" }, // Mayo 1
+                { month: 7, day: 15, name: "Asunción de la Virgen" }, // Agosto 15
+                { month: 9, day: 12, name: "Fiesta Nacional de España" }, // Octubre 12
+                { month: 10, day: 1, name: "Día de Todos los Santos" }, // Noviembre 1
+                { month: 11, day: 6, name: "Día de la Constitución" }, // Diciembre 6
+                { month: 11, day: 8, name: "Inmaculada Concepción" }, // Diciembre 8
+                { month: 11, day: 25, name: "Navidad" } // Diciembre 25
+            ];
+
+            const monthNames = [
+                "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+                "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
+            ];
+            // Weekday names, starting with Monday and ending with Sunday for display
+            const dayNames = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
+
+            // Image prompts for each month
+            const imagePrompts = [
+                "realistic image of a playful dog with a winter background, elegant and professional", // Enero
+                "realistic image of a curious cat near a fireplace, elegant and professional", // Febrero
+                "realistic image of a cute rabbit in a spring field, elegant and professional", // Marzo
+                "realistic image of a tiny hamster exploring flowers, elegant and professional", // Abril
+                "realistic image of a colorful bird perched on a branch, elegant and professional", // Mayo
+                "realistic image of a vibrant fish swimming in clear water, elegant and professional", // Junio
+                "realistic image of a clever ferret playing, elegant and professional", // Julio
+                "realistic image of a guinea pig enjoying a summer treat, elegant and professional", // Agosto
+                "realistic image of a serene turtle by a pond, elegant and professional", // Septiembre
+                "realistic image of a majestic snake in a natural habitat, elegant and professional", // Octubre
+                "realistic image of a friendly rat looking cozy, elegant and professional", // Noviembre
+                "realistic image of a spiky hedgehog in a cozy setting, elegant and professional" // Diciembre
+            ];
+
+            // Store generated image URLs to avoid re-generating
+            const generatedImageUrls = new Array(12).fill(null);
+            let coverImageUrl = null;
+
+            // Show/Hide loading spinner
+            function showLoading() {
+                loadingSpinner.classList.remove('hidden');
+                calendarApp.style.pointerEvents = 'none'; // Disable interactions
+            }
+
+            function hideLoading() {
+                loadingSpinner.classList.add('hidden');
+                calendarApp.style.pointerEvents = 'auto'; // Re-enable interactions
+            }
+
+            // Function to generate an image using the Gemini API
+            async function generateImage(prompt, elementId, isCover = false) {
+                showLoading();
+                try {
+                    const payload = { instances: { prompt: prompt }, parameters: { "sampleCount": 1 } };
+                    const apiKey = ""; // API key will be provided by the environment
+                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${apiKey}`;
+
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    const result = await response.json();
+
+                    if (result.predictions && result.predictions.length > 0 && result.predictions[0].bytesBase64Encoded) {
+                        const imageUrl = `data:image/png;base64,${result.predictions[0].bytesBase64Encoded}`;
+                        const imgElement = document.getElementById(elementId);
+                        if (imgElement) {
+                            imgElement.src = imageUrl;
+                            if (isCover) {
+                                coverImageUrl = imageUrl;
+                            } else {
+                                const monthIndex = parseInt(elementId.split('-')[1]);
+                                generatedImageUrls[monthIndex] = imageUrl;
+                            }
+                        }
+                    } else {
+                        console.error('Error generating image: Unexpected API response structure', result);
+                        // Fallback to a placeholder if image generation fails
+                        const imgElement = document.getElementById(elementId);
+                        if (imgElement) {
+                             imgElement.src = `https://placehold.co/500x300/cccccc/000000?text=Error+Cargando+Imagen`;
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error fetching image from API:', error);
+                    // Fallback to a placeholder on network/API error
+                    const imgElement = document.getElementById(elementId);
+                    if (imgElement) {
+                         imgElement.src = `https://placehold.co/500x300/cccccc/000000?text=Error+de+Red`;
+                    }
+                } finally {
+                    hideLoading();
+                }
+            }
+
+            // Function to generate a month's calendar grid
+            function generateMonthGrid(year, month) {
+                const firstDay = new Date(year, month, 1);
+                // getDay() returns 0 for Sunday, 1 for Monday... 6 for Saturday
+                // We want Monday to be the first day (0), Sunday the last (6)
+                // So, if firstDay.getDay() is 0 (Sunday), we map it to 6. Otherwise, map to getDay() - 1.
+                const startDayOfWeek = (firstDay.getDay() === 0) ? 6 : firstDay.getDay() - 1; // 0=Monday, ..., 6=Sunday
+
+                const daysInMonth = new Date(year, month + 1, 0).getDate(); // Get last day of month
+
+                let monthHtml = '';
+
+                // Add day headers (Mon, Tue, ...)
+                dayNames.forEach(day => {
+                    monthHtml += `<div class="day-header">${day}</div>`;
+                });
+
+                // Add empty cells for the days before the 1st of the month
+                for (let i = 0; i < startDayOfWeek; i++) {
+                    monthHtml += `<div class="day-cell empty"></div>`;
+                }
+
+                // Add days of the month
+                for (let day = 1; day <= daysInMonth; day++) {
+                    const isHoliday = holidays.some(h => h.month === month && h.day === day);
+                    const isToday = new Date().getDate() === day && new Date().getMonth() === month && new Date().getFullYear() === year;
+
+                    let classes = "day-cell";
+                    if (isHoliday) {
+                        classes += " holiday";
+                    }
+                    if (isToday) {
+                        classes += " current-day";
+                    }
+
+                    monthHtml += `<div class="${classes}">${day}</div>`;
+                }
+
+                return monthHtml;
+            }
+
+            // Function to render a specific month page
+            function renderMonthPage(monthIndex) {
+                const monthName = monthNames[monthIndex];
+                const petImageSrc = generatedImageUrls[monthIndex] || `https://placehold.co/500x300/cccccc/000000?text=Cargando...`;
+
+                const monthPage = document.createElement('div');
+                monthPage.id = `monthPage-${monthIndex}`; // Unique ID for each month page div
+                monthPage.className = 'month-page hidden'; // Start hidden, will be shown by displayMonth
+
+                monthPage.innerHTML = `
+                    <h2 class="text-4xl font-bold text-gray-700 mb-4">${monthName} ${currentYear}</h2>
+                    <img id="monthImage-${monthIndex}" src="${petImageSrc}" alt="Mascota de ${monthName}" class="month-image">
+                    <div class="calendar-grid">
+                        ${generateMonthGrid(currentYear, monthIndex)}
+                    </div>
+                `;
+                return monthPage;
+            }
+
+            // Pre-generate all month pages structure
+            for (let i = 0; i < 12; i++) {
+                monthPagesContainer.appendChild(renderMonthPage(i));
+            }
+
+            // Function to display a specific month
+            async function displayMonth(index) {
+                // Hide all month pages
+                Array.from(monthPagesContainer.children).forEach(page => {
+                    page.classList.add('hidden');
+                });
+
+                // Show the target month page
+                const targetMonthPage = document.getElementById(`monthPage-${index}`); // Use the correct ID
+                if (targetMonthPage) {
+                    targetMonthPage.classList.remove('hidden');
+                }
+                currentMonthIndex = index;
+
+                // Generate image if not already generated
+                if (!generatedImageUrls[index]) {
+                    await generateImage(imagePrompts[index], `monthImage-${index}`);
+                }
+            }
+
+            // Event Listeners
+            startButton.addEventListener('click', async () => {
+                coverPage.classList.add('hidden');
+                monthPagesContainer.classList.remove('hidden');
+                monthNavigation.classList.remove('hidden');
+                await displayMonth(0); // Display January and generate its image if needed
+            });
+
+            prevMonthButton.addEventListener('click', async () => {
+                currentMonthIndex = (currentMonthIndex - 1 + 12) % 12;
+                await displayMonth(currentMonthIndex);
+            });
+
+            nextMonthButton.addEventListener('click', async () => {
+                currentMonthIndex = (currentMonthIndex + 1) % 12;
+                await displayMonth(currentMonthIndex);
+            });
+
+            backToCoverButton.addEventListener('click', () => {
+                monthPagesContainer.classList.add('hidden');
+                monthNavigation.classList.add('hidden');
+                coverPage.classList.remove('hidden');
+                // Ensure cover image is displayed if user goes back
+                if (coverImageUrl) {
+                    coverImageElement.src = coverImageUrl;
+                } else {
+                    coverImageElement.src = `https://placehold.co/600x400/a3d9e0/000000?text=Cargando+Imagen...`;
+                    generateImage("a realistic, elegant, and professional image of a dog and a cat sitting together, high quality", "coverImage", true);
+                }
+            });
+
+            // Initial generation of cover image on load
+            await generateImage("a realistic, elegant, and professional image of a dog and a cat sitting together, high quality", "coverImage", true);
+        });
+    </script>
+</body>
+</html>
